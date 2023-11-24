@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html translate="no" lang="es" >
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Perfiles QR</title>
+    <link rel="stylesheet" href="estilo.css">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            position: relative;
+            height: 100vh;
+        }
+        #particle-canvas {
+  width: 100%;
+  height: 100vh;
+  background: linear-gradient(to bottom, rgb(10, 10, 50) 0%,rgb(60, 10, 60) 100%);
+  vertical-align: middle;
+}
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        #content-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            z-index: 1;
+        }
+
+        h1 {
+            color: #ffffff;
+        }
+
+        form {
+          
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+            width: 300px;
+            text-align: center;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #ffffff;
+        }
+
+        input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 16px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        button {
+            background-color: #4caf50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        img {
+            margin-top: 20px;
+            max-width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        #mensaje {
+            color: green;
+            background-color: aqua;
+        }
+
+        .shakeFix:hover {
+            animation-name: shakefix;
+            -webkit-animation-name: shakefix;
+            -moz-animation-name: shakefix;
+            animation-duration: 1s;
+            -webkit-animation-duration: 1s;
+            -moz-animation-duration: 1s;
+            animation-iteration-count: infinite;
+            -webkit-animation-iteration-count: infinite;
+            -moz-animation-iteration-count: infinite;
+        }
+
+        @keyframes shakefix {
+            0% { transform: translate(1px, 1px); }
+            10% { transform: translate(-1px, -2px); }
+            20% { transform: translate(-3px, 0px); }
+            30% { transform: translate(3px, 2px); }
+            40% { transform: translate(1px, -1px); }
+            50% { transform: translate(-1px, 2px); }
+            60% { transform: translate(-3px, 1px); }
+            70% { transform: translate(3px, 1px); }
+            80% { transform: translate(-1px, -1px); }
+            90% { transform: translate(1px, 2px); }
+            100% { transform: translate(1px, -2px); }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="particle-canvas"></canvas>
+    <div id="content-container">
+        <h1>Generador de Perfiles QR</h1>
+        <form action="/generarPerfil" method="post">
+            <label for="nombre">Nombre:</label>
+            <input type="text" id="nombre" name="nombre" required><br>
+
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" required><br>
+
+            <div id="codigoQRContainer" style="display: none;">
+                <h2>Código QR de tu perfil:</h2>
+                <div id="codigoQR"></div>
+            </div>
+            <button type="submit" class="shakeFix">Generar Perfil QR</button>
+        </form>
+        <div id="mensaje"></div>
+    </div>
+    <script>
+        const mensajeDiv = document.getElementById('mensaje');
+        const codigoQRContainer = document.getElementById('codigoQRContainer');
+        const codigoQRDiv = document.getElementById('codigoQR');
+    
+        const queryString = window.location.search;
+        const urlParams = new URLSearchParams(queryString);
+    
+        if (urlParams.has('perfilGenerado')) {
+            mensajeDiv.innerText = '¡Perfil generado correctamente!';
+            mostrarCodigoQR();
+        }
+    
+        function mostrarCodigoQR() {
+            codigoQRContainer.style.display = 'block';
+            const perfilData = JSON.parse(localStorage.getItem('perfilData'));
+            generarCodigoQR(perfilData);
+        }
+    
+        function generarCodigoQR(perfil) {
+            // Utiliza la biblioteca qrcode para generar el código QR
+            const qrCode = new QRCode({
+                content: JSON.stringify(perfil),
+                width: 200,
+                height: 200
+            });
+    
+            // Obtén la URL del código QR generado
+            const qrCodeUrl = qrCode.toDataURL();
+    
+            // Establece la URL del código QR como el src del elemento de la imagen
+            codigoQRDiv.innerHTML = `<img src="${qrCodeUrl}" alt="Perfil QR">`;
+        }
+
+
+        // modified version of random-normal
+function normalPool(o){var r=0;do{var a=Math.round(normal({mean:o.mean,dev:o.dev}));if(a<o.pool.length&&a>=0)return o.pool[a];r++}while(r<100)}function randomNormal(o){if(o=Object.assign({mean:0,dev:1,pool:[]},o),Array.isArray(o.pool)&&o.pool.length>0)return normalPool(o);var r,a,n,e,l=o.mean,t=o.dev;do{r=(a=2*Math.random()-1)*a+(n=2*Math.random()-1)*n}while(r>=1);return e=a*Math.sqrt(-2*Math.log(r)/r),t*e+l}
+
+const NUM_PARTICLES = 600;
+const PARTICLE_SIZE = 0.5; // View heights
+const SPEED = 20000; // Milliseconds
+
+let particles = [];
+
+function rand(low, high) {
+  return Math.random() * (high - low) + low;
+}
+
+function createParticle(canvas) {
+  const colour = {
+    r: 255,
+    g: randomNormal({ mean: 125, dev: 20 }),
+    b: 50,
+    a: rand(0, 1),
+  };
+  return {
+    x: -2,
+    y: -2,
+    diameter: Math.max(0, randomNormal({ mean: PARTICLE_SIZE, dev: PARTICLE_SIZE / 2 })),
+    duration: randomNormal({ mean: SPEED, dev: SPEED * 0.1 }),
+    amplitude: randomNormal({ mean: 16, dev: 2 }),
+    offsetY: randomNormal({ mean: 0, dev: 10 }),
+    arc: Math.PI * 2,
+    startTime: performance.now() - rand(0, SPEED),
+    colour: `rgba(${colour.r}, ${colour.g}, ${colour.b}, ${colour.a})`,
+  }
+}
+
+function moveParticle(particle, canvas, time) {
+  const progress = ((time - particle.startTime) % particle.duration) / particle.duration;
+  return {
+    ...particle,
+    x: progress,
+    y: ((Math.sin(progress * particle.arc) * particle.amplitude) + particle.offsetY),
+  };
+}
+
+function drawParticle(particle, canvas, ctx) {
+  canvas = document.getElementById('particle-canvas');
+  const vh = canvas.height / 100;
+
+  ctx.fillStyle = particle.colour;
+  ctx.beginPath();
+  ctx.ellipse(
+    particle.x * canvas.width,
+    particle.y * vh + (canvas.height / 2),
+    particle.diameter * vh,
+    particle.diameter * vh,
+    0,
+    0,
+    2 * Math.PI
+  );
+  ctx.fill();
+}
+
+function draw(time, canvas, ctx) {
+  // Move particles
+  particles.forEach((particle, index) => {
+    particles[index] = moveParticle(particle, canvas, time);
+  })
+
+  // Clear the canvas
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Draw the particles
+  particles.forEach((particle) => {
+    drawParticle(particle, canvas, ctx);
+  })
+
+  // Schedule next frame
+  requestAnimationFrame((time) => draw(time, canvas, ctx));
+}
+
+function initializeCanvas() {
+  let canvas = document.getElementById('particle-canvas');
+  canvas.width = canvas.offsetWidth * window.devicePixelRatio;
+  canvas.height = canvas.offsetHeight * window.devicePixelRatio;
+  let ctx = canvas.getContext("2d");
+
+  window.addEventListener('resize', () => {
+    canvas.width = canvas.offsetWidth * window.devicePixelRatio;
+    canvas.height = canvas.offsetHeight * window.devicePixelRatio;
+    ctx = canvas.getContext("2d");
+  })
+
+  return [canvas, ctx];
+}
+
+function startAnimation() {
+  const [canvas, ctx] = initializeCanvas();
+
+  // Create a bunch of particles
+  for (let i = 0; i < NUM_PARTICLES; i++) {
+    particles.push(createParticle(canvas));
+  }
+  
+  requestAnimationFrame((time) => draw(time, canvas, ctx));
+};
+
+// Start animation when document is loaded
+(function () {
+  if (document.readystate !== 'loading') {
+    startAnimation();
+  } else {
+    document.addEventListener('DOMContentLoaded', () => {
+      startAnimation();
+    })
+  }
+}());
+
+    </script>
+    
+    
+</body>
+</html>
